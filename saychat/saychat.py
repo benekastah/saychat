@@ -44,7 +44,7 @@ def say(message, voice=None):
     args = ['say', message]
     if voice:
         args += ['-v', voice]
-    subprocess.call(args)
+    subprocess.Popen(args)
 
 
 def chat_client(host, port):
@@ -74,7 +74,8 @@ def chat_client(host, port):
                     print('\nDisconnected from chat server')
                     sys.exit()
                 else:
-                    ident, message = data.decode().split('\t', maxsplit=1)
+                    ident, message = data.split(b'\t', maxsplit=1)
+                    message = message.decode()
 
                     match = re.search(r'^\\voice\s+(?P<voice>.+)', message, re.IGNORECASE)
                     if match:
