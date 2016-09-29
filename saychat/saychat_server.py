@@ -29,7 +29,7 @@ def chat_server(host, port):
                 SOCKET_LIST.append(sockfd)
                 print("Client (%s, %s) connected" % addr)
 
-                broadcast(server_socket, sockfd, "[%s:%s] entered our chatting room\n" % addr)
+                broadcast(server_socket, sockfd, "Here I am!\n")
 
             # a message from a client, not a new connection
             else:
@@ -39,35 +39,37 @@ def chat_server(host, port):
                     data = sock.recv(RECV_BUFFER)
                     if data:
                         # there is something in the socket
-                        broadcast(server_socket, sock, '\r[' + str(sock.getpeername()) + '] ' + data.decode())
+                        broadcast(server_socket, sock, data.decode())
                     else:
                         # remove the socket that's broken
                         if sock in SOCKET_LIST:
                             SOCKET_LIST.remove(sock)
 
                         # at this stage, no data means probably the connection has been broken
-                        broadcast(server_socket, sock, "Client (%s, %s) is offline\n" % addr)
+                        broadcast(server_socket, sock, "I went offline\n")
 
                 # exception
                 except OSError:
-                    broadcast(server_socket, sock, "Client (%s, %s) is offline\n" % addr)
+                    broadcast(server_socket, sock, "I went offline\n")
                     continue
 
     server_socket.close()
+
 
 # broadcast chat messages to all connected clients
 def broadcast (server_socket, sock, message):
     for socket in SOCKET_LIST:
         # send the message only to peer
-        if socket != server_socket and socket != sock:
+        if socket != server_socket:
             try:
-                socket.send(message.encode())
+                socket.send(b'%s\t%s' % (str(sock.getpeername()).encode(), message.encode()))
             except OSError:
                 # broken socket connection
                 socket.close()
                 # broken socket, remove it
                 if socket in SOCKET_LIST:
                     SOCKET_LIST.remove(socket)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
