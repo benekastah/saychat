@@ -6,6 +6,10 @@ import subprocess
 import sys
 
 
+def show_voices():
+    print(', '.join(VOICES))
+
+
 def get_voices():
     result = subprocess.check_output(['say', '-v', '?'])
     voices = []
@@ -75,14 +79,16 @@ def chat_client(host, port):
                     match = re.search(r'^\\voice\s+(?P<voice>.+)', message, re.IGNORECASE)
                     if match:
                         voice = match.group('voice')
-                        if voice in VOICES:
-                            voices_by_ident[ident] = voice
+                        voices_by_ident[ident] = voice
                         continue
 
                     say(message, get_voice(ident))
             else:
                 # user entered a message
                 msg = sys.stdin.readline()
+                if msg.strip() == '?':
+                    print('Write "\\voice voicename" to change your voice')
+                    show_voices()
                 s.send(msg.encode())
 
 if __name__ == "__main__":
