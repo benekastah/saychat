@@ -1,3 +1,5 @@
+import random
+import re
 import select
 import socket
 import subprocess
@@ -7,6 +9,36 @@ import sys
 def prompt():
     sys.stdout.write('> ')
     sys.stdout.flush()
+
+
+def get_voices():
+    result = subprocess.check_output(['say', '-v', '?'])
+    voices = []
+    for line in result.decode().splitlines():
+        match = re.search(r'^(?P<name>[\w-]+(\s[\w-]+)*)\s+(?P<locale>[\w-]+)\s+#.*$', line)
+        if not match:
+            print('No match: ', line)
+            continue
+        name, locale = match.group('name'), match.group('locale')
+        if locale.startswith('en_') or locale.startswith('en-'):
+            voices.append(name)
+    return voices
+
+
+VOICES = get_voices()
+voices_by_ident = {}
+
+
+def get_voice(ident):
+    global voices_by_ident
+    if ident not in voices_by_ident:
+        used_voices = set(voices_by_ident.values())
+        for _ in range(len(VOICES)):
+            voice = random.choice(VOICES)
+            voices_by_ident[ident] = voice
+            if voice not in used_voices:
+                break
+    return voices_by_ident[ident]
 
 
 def say(message, voice=None):
@@ -44,7 +76,16 @@ def chat_client(host, port):
                     print('\nDisconnected from chat server')
                     sys.exit()
                 else:
-                    sys.stdout.write(data.decode())
+                    ident, message = data.decode().split('\t', maxsplit=1)
+
+                    match = re.search(r'^\\voice\s+(?P<voice>.+)', message, re.IGNORECASE)
+                    if match:
+                        voice = match.group('voice')
+                        if voice in VOICES:
+                            voices_by_ident[ident] = voice
+                        continue
+
+                    say(message, get_voice(ident))
                     prompt()
             else:
                 # user entered a message
