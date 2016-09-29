@@ -6,11 +6,6 @@ import subprocess
 import sys
 
 
-def prompt():
-    sys.stdout.write('> ')
-    sys.stdout.flush()
-
-
 def get_voices():
     result = subprocess.check_output(['say', '-v', '?'])
     voices = []
@@ -60,7 +55,6 @@ def chat_client(host, port):
         sys.exit()
 
     print('Connected to remote host. You can start sending messages')
-    prompt()
 
     while 1:
         socket_list = [sys.stdin, s]
@@ -86,12 +80,10 @@ def chat_client(host, port):
                         continue
 
                     say(message, get_voice(ident))
-                    prompt()
             else:
                 # user entered a message
                 msg = sys.stdin.readline()
                 s.send(msg.encode())
-                prompt()
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
